@@ -154,7 +154,7 @@ colPalette <- rainbow(45)
 g3 <- ggplot(daily_total_steps_filled, aes(total_steps)) 
 g3 <- g3 + geom_histogram(col = 'black', fill = colPalette[30]) # colors with blue
 g3 <- g3 + labs(x = 'Total Steps', y = 'Frequency')
-g3 <- g3 + labs(title = 'Number of steps taken from 2012/10/01 to 2012/11/31 - missing data filled')
+g3 <- g3 + labs(title = 'Number of steps taken from 2012/10/01 to 2012/11/31 - filled NA data')
 g3 <- g3 + geom_rug(col = colPalette[27])
 g3 <- g3 + theme_bw(base_size = 12, base_family = 'sans')
 

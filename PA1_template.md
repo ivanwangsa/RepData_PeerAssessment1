@@ -214,7 +214,7 @@ colPalette <- rainbow(45)
 g3 <- ggplot(daily_total_steps_filled, aes(total_steps)) 
 g3 <- g3 + geom_histogram(col = 'black', fill = colPalette[30]) # colors with blue
 g3 <- g3 + labs(x = 'Total Steps', y = 'Frequency')
-g3 <- g3 + labs(title = 'Number of steps taken from 2012/10/01 to 2012/11/31 - missing data filled')
+g3 <- g3 + labs(title = 'Number of steps taken from 2012/10/01 to 2012/11/31 - filled NA data')
 g3 <- g3 + geom_rug(col = colPalette[27])
 g3 <- g3 + theme_bw(base_size = 12, base_family = 'sans')
 
@@ -258,7 +258,7 @@ print.xtable(xt, type = 'html')
 ```
 
 <!-- html table generated in R 3.2.2 by xtable 1.8-0 package -->
-<!-- Fri Nov 13 00:15:06 2015 -->
+<!-- Fri Nov 13 00:16:30 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> Median </th> <th> Mean </th>  </tr>
   <tr> <td align="right"> Daily Total Steps </td> <td align="right"> 10400 </td> <td align="right"> 9354 </td> </tr>
