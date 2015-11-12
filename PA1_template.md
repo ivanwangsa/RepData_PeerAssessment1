@@ -71,14 +71,14 @@ library(ggplot2)
 
 colPalette <- rainbow(45)
 
-g <- ggplot(daily_total_steps, aes(total_steps)) 
-g <- g + geom_histogram(col = 'black', fill = colPalette[30]) # colors with blue
-g <- g + labs(x = 'Total Steps', y = 'Frequency')
-g <- g + labs(title = 'Number of steps taken from 2012/10/01 to 2012/11/31')
-g <- g + geom_rug(col = colPalette[27])
-g <- g + theme_bw(base_size = 12, base_family = 'sans')
+g1 <- ggplot(daily_total_steps, aes(total_steps)) 
+g1 <- g1 + geom_histogram(col = 'black', fill = colPalette[30]) # colors with blue
+g1 <- g1 + labs(x = 'Total Steps', y = 'Frequency')
+g1 <- g1 + labs(title = 'Number of steps taken from 2012/10/01 to 2012/11/31')
+g1 <- g1 + geom_rug(col = colPalette[27])
+g1 <- g1 + theme_bw(base_size = 12, base_family = 'sans')
 
-print(g)
+print(g1)
 ```
 
 ![](PA1_template_files/figure-html/plot_total_steps-1.png) 
@@ -134,16 +134,16 @@ The interval will show date of `1970-01-01` - this is due to formatting as POSIX
 ```r
 library(scales)
 
-g <- ggplot(average_activity_data, aes(interval, avg_steps))
-g <- g + geom_line(col = 'blue')
-g <- g + scale_x_datetime(labels = date_format('%H:%M'), 
+g2 <- ggplot(average_activity_data, aes(interval, avg_steps))
+g2 <- g2 + geom_line(col = 'blue')
+g2 <- g2 + scale_x_datetime(labels = date_format('%H:%M'), 
                           breaks = date_breaks('3 hours'), 
                           expand = c(0,0))
-g <- g + theme_bw(base_size = 12, base_family = 'sans')
-g <- g + labs(x = 'Time of the day', y = 'Average number of steps') 
-g <- g + labs(title = 'Average activity data on a day')
+g2 <- g2 + theme_bw(base_size = 12, base_family = 'sans')
+g2 <- g2 + labs(x = 'Time of the day', y = 'Average number of steps') 
+g2 <- g2 + labs(title = 'Average activity data on a day')
 
-print(g)
+print(g2)
 ```
 
 ![](PA1_template_files/figure-html/plot_average_activity-1.png) 
@@ -166,9 +166,104 @@ print(result)
 ## 1 1970-01-01 08:35:00  206.1698
 ```
 
-Indeed, we see that at time of 08:35, the maximum number of steps, that is 206 steps is recorded.
+Indeed, we see that at time of 08:35, the maximum number of steps, that is 206.17 steps is recorded.
 
 ## Inputing missing values
+
+We see that there are a lot of missing values. Let's find out how many of them are actually missing.
+
+
+```r
+number_of_rows <- nrow(analytic_data)
+number_of_NA_steps <- sum(is.na(analytic_data$steps))
+
+number_of_NA_steps
+```
+
+```
+## [1] 2304
+```
+
+We see that there are 2304 data with missing steps, out of 17568 observations. These missing values constitute 13.1% of all observations.
+
+Let's now figure out a way to fill in these data, so we can proceed further with our observation. Let's stick with the most basic strategy: Fill it in with daily average, that we have calculated in section two. Indeed, with the data that we have, this will be easy. The filled data will be located at `filled_data`
+
+
+```r
+# create lookup table for easy look
+rownames(average_activity_data) <- format(average_activity_data$interval, "%H:%M")
+
+filled_data <- tbl_df(merge(analytic_data, average_activity_data, by='interval'))
+
+filled_data <- filled_data %>%
+    arrange(date, interval) %>%
+    mutate(steps = ifelse(is.na(steps), avg_steps, steps)) %>%
+    select(-avg_steps)
+```
+
+Again, let's re-do the histogram in part 1. We can use practically the same code to report our results.
+
+
+```r
+daily_total_steps_filled <- filled_data %>%
+    group_by(date) %>%
+    summarise(total_steps = sum(steps, na.rm = TRUE))
+
+colPalette <- rainbow(45)
+
+g3 <- ggplot(daily_total_steps_filled, aes(total_steps)) 
+g3 <- g3 + geom_histogram(col = 'black', fill = colPalette[30]) # colors with blue
+g3 <- g3 + labs(x = 'Total Steps', y = 'Frequency')
+g3 <- g3 + labs(title = 'Number of steps taken from 2012/10/01 to 2012/11/31 - missing data filled')
+g3 <- g3 + geom_rug(col = colPalette[27])
+g3 <- g3 + theme_bw(base_size = 12, base_family = 'sans')
+
+print(g3)
+```
+
+```
+## stat_bin: binwidth defaulted to range/30. Use 'binwidth = x' to adjust this.
+```
+
+![](PA1_template_files/figure-html/total_steps_filled-1.png) 
+
+We see that the histogram is no longer skewed to the left - we recover a lot of missing data, and subsequently the peak shifts to the center of the plot.
+
+And the summary statistics, `mean` and `median` as well.
+
+
+```r
+daily_total_steps_filled_summary <- summary(daily_total_steps_filled$total_steps)
+median_total_steps_filled <- daily_total_steps_filled_summary['Median']
+mean_total_steps_filled <- daily_total_steps_filled_summary['Mean']
+
+print(daily_total_steps_filled_summary[3:4])
+```
+
+```
+## Median   Mean 
+##  10770  10770
+```
+
+We recorded median of 10770 and mean of 10770. Let's compare the two summary statistics with the original data in the following table.
+
+
+```r
+library(xtable)
+
+combined_table <- rbind(daily_total_steps_summary, daily_total_steps_filled_summary) 
+rownames(combined_table) <- c('Daily Total Steps', 'Daily Total Steps (Filled)')
+xt <- xtable(data.frame(combined_table[,3:4, drop=FALSE]), digits = 0)
+print.xtable(xt, type = 'html')
+```
+
+<!-- html table generated in R 3.2.2 by xtable 1.8-0 package -->
+<!-- Fri Nov 13 00:11:43 2015 -->
+<table border=1>
+<tr> <th>  </th> <th> Median </th> <th> Mean </th>  </tr>
+  <tr> <td align="right"> Daily Total Steps </td> <td align="right"> 10400 </td> <td align="right"> 9354 </td> </tr>
+  <tr> <td align="right"> Daily Total Steps (Filled) </td> <td align="right"> 10770 </td> <td align="right"> 10770 </td> </tr>
+   </table>
 
 
 

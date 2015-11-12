@@ -1,9 +1,9 @@
 ---
 title: 'Reproducible Research: Peer Assessment 1'
 output:
+  pdf_document: default
   html_document:
     keep_md: yes
-  pdf_document: default
 ---
 
 ## Loading and preprocessing the data
@@ -49,14 +49,14 @@ library(ggplot2)
 
 colPalette <- rainbow(45)
 
-g <- ggplot(daily_total_steps, aes(total_steps)) 
-g <- g + geom_histogram(col = 'black', fill = colPalette[30]) # colors with blue
-g <- g + labs(x = 'Total Steps', y = 'Frequency')
-g <- g + labs(title = 'Number of steps taken from 2012/10/01 to 2012/11/31')
-g <- g + geom_rug(col = colPalette[27])
-g <- g + theme_bw(base_size = 12, base_family = 'sans')
+g1 <- ggplot(daily_total_steps, aes(total_steps)) 
+g1 <- g1 + geom_histogram(col = 'black', fill = colPalette[30]) # colors with blue
+g1 <- g1 + labs(x = 'Total Steps', y = 'Frequency')
+g1 <- g1 + labs(title = 'Number of steps taken from 2012/10/01 to 2012/11/31')
+g1 <- g1 + geom_rug(col = colPalette[27])
+g1 <- g1 + theme_bw(base_size = 12, base_family = 'sans')
 
-print(g)
+print(g1)
 ```
 
 As we can see, the missing values highly skew the total number of steps taken daily - 10 days with near-to-zero steps are recorded. We are going to discuss what we are going to do with the missing value later - for now, let's see the effect of such outliers with summary statistics of the data; more specifically, median and mean.
@@ -90,16 +90,16 @@ The interval will show date of `1970-01-01` - this is due to formatting as POSIX
 
 library(scales)
 
-g <- ggplot(average_activity_data, aes(interval, avg_steps))
-g <- g + geom_line(col = 'blue')
-g <- g + scale_x_datetime(labels = date_format('%H:%M'), 
+g2 <- ggplot(average_activity_data, aes(interval, avg_steps))
+g2 <- g2 + geom_line(col = 'blue')
+g2 <- g2 + scale_x_datetime(labels = date_format('%H:%M'), 
                           breaks = date_breaks('3 hours'), 
                           expand = c(0,0))
-g <- g + theme_bw(base_size = 12, base_family = 'sans')
-g <- g + labs(x = 'Time of the day', y = 'Average number of steps') 
-g <- g + labs(title = 'Average activity data on a day')
+g2 <- g2 + theme_bw(base_size = 12, base_family = 'sans')
+g2 <- g2 + labs(x = 'Time of the day', y = 'Average number of steps') 
+g2 <- g2 + labs(title = 'Average activity data on a day')
 
-print(g)
+print(g2)
 ```
 
 As we can see, we have a peak some-time around 9 AM - around 200 steps. Let's see the maximum average number of steps, and when does it happen.
@@ -116,6 +116,74 @@ Indeed, we see that at time of `r format(result$interval, '%H:%M')`, the maximum
 
 ## Inputing missing values
 
+We see that there are a lot of missing values. Let's find out how many of them are actually missing.
 
+```{r, count_NA_values}
+number_of_rows <- nrow(analytic_data)
+number_of_NA_steps <- sum(is.na(analytic_data$steps))
+
+number_of_NA_steps
+```
+
+We see that there are `r number_of_NA_steps` data with missing steps, out of `r number_of_rows` observations. These missing values constitute `r format(number_of_NA_steps/number_of_rows * 100, digits = 3)`% of all observations.
+
+Let's now figure out a way to fill in these data, so we can proceed further with our observation. Let's stick with the most basic strategy: Fill it in with daily average, that we have calculated in section two. Indeed, with the data that we have, this will be easy. The filled data will be located at `filled_data`
+
+```{r, fill_NA_values}
+
+# create lookup table for easy look
+rownames(average_activity_data) <- format(average_activity_data$interval, "%H:%M")
+
+filled_data <- tbl_df(merge(analytic_data, average_activity_data, by='interval'))
+
+filled_data <- filled_data %>%
+    arrange(date, interval) %>%
+    mutate(steps = ifelse(is.na(steps), avg_steps, steps)) %>%
+    select(-avg_steps)
+```
+
+Again, let's re-do the histogram in part 1. We can use practically the same code to report our results.
+
+```{r, total_steps_filled}
+daily_total_steps_filled <- filled_data %>%
+    group_by(date) %>%
+    summarise(total_steps = sum(steps, na.rm = TRUE))
+
+colPalette <- rainbow(45)
+
+g3 <- ggplot(daily_total_steps_filled, aes(total_steps)) 
+g3 <- g3 + geom_histogram(col = 'black', fill = colPalette[30]) # colors with blue
+g3 <- g3 + labs(x = 'Total Steps', y = 'Frequency')
+g3 <- g3 + labs(title = 'Number of steps taken from 2012/10/01 to 2012/11/31 - missing data filled')
+g3 <- g3 + geom_rug(col = colPalette[27])
+g3 <- g3 + theme_bw(base_size = 12, base_family = 'sans')
+
+print(g3)
+```
+
+We see that the histogram is no longer skewed to the left - we recover a lot of missing data, and subsequently the peak shifts to the center of the plot.
+
+And the summary statistics, `mean` and `median` as well.
+
+```{r, summary_total_steps_filled}
+daily_total_steps_filled_summary <- summary(daily_total_steps_filled$total_steps)
+median_total_steps_filled <- daily_total_steps_filled_summary['Median']
+mean_total_steps_filled <- daily_total_steps_filled_summary['Mean']
+
+print(daily_total_steps_filled_summary[3:4])
+```
+
+We recorded median of `r as.character(median_total_steps_filled)` and mean of `r as.character(mean_total_steps_filled)`. Let's compare the two summary statistics with the original data in the following table.
+
+```{r, comparison_table, comment=NA, results='asis'}
+library(xtable)
+
+combined_table <- rbind(daily_total_steps_summary, daily_total_steps_filled_summary) 
+rownames(combined_table) <- c('Daily Total Steps', 'Daily Total Steps (Filled)')
+xt <- xtable(data.frame(combined_table[,3:4, drop=FALSE]), digits = 0)
+print.xtable(xt, type = 'html')
+```
+
+We see that the median and mean increases, as expected. As more data are filled in, these missing data (which were not counted) are getting counted, thereby shifting both statistics.
 
 ## Are there differences in activity patterns between weekdays and weekends?
