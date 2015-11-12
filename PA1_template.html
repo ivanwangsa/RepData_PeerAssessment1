@@ -229,7 +229,7 @@ rownames(combined_table) &lt;- c('Daily Total Steps', 'Daily Total Steps (Filled
 xt &lt;- xtable(data.frame(combined_table[,3:4, drop=FALSE]), digits = 0)
 print.xtable(xt, type = 'html')</code></pre>
 <!-- html table generated in R 3.2.2 by xtable 1.8-0 package -->
-<!-- Fri Nov 13 00:11:43 2015 -->
+<!-- Fri Nov 13 00:15:06 2015 -->
 <table border="1">
 <tr>
 <th>
@@ -264,6 +264,7 @@ Daily Total Steps (Filled)
 </td>
 </tr>
 </table>
+<p>We see that the median and mean increases, as expected. As more data are filled in, these missing data (which were not counted) are getting counted, thereby shifting both statistics.</p>
 </div>
 <div id="are-there-differences-in-activity-patterns-between-weekdays-and-weekends" class="section level2">
 <h2>Are there differences in activity patterns between weekdays and weekends?</h2>
