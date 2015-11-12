@@ -221,10 +221,6 @@ g3 <- g3 + theme_bw(base_size = 12, base_family = 'sans')
 print(g3)
 ```
 
-```
-## stat_bin: binwidth defaulted to range/30. Use 'binwidth = x' to adjust this.
-```
-
 ![](PA1_template_files/figure-html/total_steps_filled-1.png) 
 
 We see that the histogram is no longer skewed to the left - we recover a lot of missing data, and subsequently the peak shifts to the center of the plot.
@@ -258,7 +254,7 @@ print.xtable(xt, type = 'html')
 ```
 
 <!-- html table generated in R 3.2.2 by xtable 1.8-0 package -->
-<!-- Fri Nov 13 00:16:30 2015 -->
+<!-- Fri Nov 13 00:19:01 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> Median </th> <th> Mean </th>  </tr>
   <tr> <td align="right"> Daily Total Steps </td> <td align="right"> 10400 </td> <td align="right"> 9354 </td> </tr>

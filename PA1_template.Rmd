@@ -144,7 +144,7 @@ filled_data <- filled_data %>%
 
 Again, let's re-do the histogram in part 1. We can use practically the same code to report our results.
 
-```{r, total_steps_filled}
+```{r, total_steps_filled, message = FALSE}
 daily_total_steps_filled <- filled_data %>%
     group_by(date) %>%
     summarise(total_steps = sum(steps, na.rm = TRUE))
