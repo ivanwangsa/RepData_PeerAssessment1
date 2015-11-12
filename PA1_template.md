@@ -1,5 +1,7 @@
 # Reproducible Research: Peer Assessment 1
 
+
+
 ## Loading and preprocessing the data
 
 At first, we load the packages needed to clean-up the data, namely `lubridate` and `dplyr`. Then, we read the raw data and store it in `raw_data`. We reformat the data on the correct format, more specifically column `date` in `POSIXct` class, and column `interval` in `POSIXct` class, assuming UNIX time (origin = `1970-01-01`).
@@ -81,7 +83,7 @@ g1 <- g1 + theme_bw(base_size = 12, base_family = 'sans')
 print(g1)
 ```
 
-![](PA1_template_files/figure-html/plot_total_steps-1.png) 
+![](figure/plot_total_steps-1.png) 
 
 As we can see, the missing values highly skew the total number of steps taken daily - 10 days with near-to-zero steps are recorded. We are going to discuss what we are going to do with the missing value later - for now, let's see the effect of such outliers with summary statistics of the data; more specifically, median and mean.
 
@@ -146,7 +148,7 @@ g2 <- g2 + labs(title = 'Average activity data on a day')
 print(g2)
 ```
 
-![](PA1_template_files/figure-html/plot_average_activity-1.png) 
+![](figure/plot_average_activity-1.png) 
 
 As we can see, we have a peak some-time around 9 AM - around 200 steps. Let's see the maximum average number of steps, and when does it happen.
 
@@ -221,7 +223,7 @@ g3 <- g3 + theme_bw(base_size = 12, base_family = 'sans')
 print(g3)
 ```
 
-![](PA1_template_files/figure-html/total_steps_filled-1.png) 
+![](figure/total_steps_filled-1.png) 
 
 We see that the histogram is no longer skewed to the left - we recover a lot of missing data, and subsequently the peak shifts to the center of the plot.
 
@@ -254,7 +256,7 @@ print.xtable(xt, type = 'html')
 ```
 
 <!-- html table generated in R 3.2.2 by xtable 1.8-0 package -->
-<!-- Fri Nov 13 00:19:01 2015 -->
+<!-- Fri Nov 13 00:26:10 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> Median </th> <th> Mean </th>  </tr>
   <tr> <td align="right"> Daily Total Steps </td> <td align="right"> 10400 </td> <td align="right"> 9354 </td> </tr>

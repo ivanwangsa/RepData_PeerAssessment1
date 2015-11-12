@@ -6,6 +6,11 @@ output:
   pdf_document: default
 ---
 
+```{r setoptions, echo=FALSE}
+library(knitr)
+opts_chunk$set(message=FALSE, fig.path='figure/')
+```
+
 ## Loading and preprocessing the data
 
 At first, we load the packages needed to clean-up the data, namely `lubridate` and `dplyr`. Then, we read the raw data and store it in `raw_data`. We reformat the data on the correct format, more specifically column `date` in `POSIXct` class, and column `interval` in `POSIXct` class, assuming UNIX time (origin = `1970-01-01`).
