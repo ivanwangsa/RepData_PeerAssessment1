@@ -2,7 +2,7 @@
 
 ## Loading and preprocessing the data
 
-At first, we load the packages needed to clean-up the data, namely `lubridate` and `dplyr`.
+At first, we load the packages needed to clean-up the data, namely `lubridate` and `dplyr`. Then, we read the raw data and store it in `raw_data`. We reformat the data on the correct format, more specifically column `date` in `POSIXct` class, and column `interval` in `POSIXct` class, assuming UNIX time (origin = `1970-01-01`).
 
 
 ```r
@@ -10,10 +10,11 @@ library(dplyr)
 library(lubridate)
 
 path_to_data <- file.path('data', 'activity.csv')
-measured_data <- tbl_df(read.csv(path_to_data))
-analytic_data <- measured_data %>%
+raw_data <- tbl_df(read.csv(path_to_data))
+analytic_data <- raw_data %>%
     mutate(date = ymd(as.character(date))) %>%
-    mutate(interval = new_period(hour = interval %/% 100, minute = interval %% 100))
+    mutate(interval = ((interval %/% 100) * 60 + interval %% 100) * 60) %>%
+    mutate(interval = as.POSIXct(interval, origin = '1970-01-01', tz = 'UTC'))
 ```
 
 The following is a preview of the pre-processed data.
@@ -26,14 +27,14 @@ head(analytic_data)
 ```
 ## Source: local data frame [6 x 3]
 ## 
-##   steps       date interval
-##   (int)     (time)    (dbl)
-## 1    NA 2012-10-01       0S
-## 2    NA 2012-10-01    5M 0S
-## 3    NA 2012-10-01   10M 0S
-## 4    NA 2012-10-01   15M 0S
-## 5    NA 2012-10-01   20M 0S
-## 6    NA 2012-10-01   25M 0S
+##   steps       date            interval
+##   (int)     (time)              (time)
+## 1    NA 2012-10-01 1970-01-01 00:00:00
+## 2    NA 2012-10-01 1970-01-01 00:05:00
+## 3    NA 2012-10-01 1970-01-01 00:10:00
+## 4    NA 2012-10-01 1970-01-01 00:15:00
+## 5    NA 2012-10-01 1970-01-01 00:20:00
+## 6    NA 2012-10-01 1970-01-01 00:25:00
 ```
 
 ## What is mean total number of steps taken per day?
@@ -62,7 +63,7 @@ head(daily_total_steps)
 ## 6 2012-10-06       15420
 ```
 
-Next, we are going to take a look on the distribution of the data - some of the data are missing, so it would be of interest to take a look on the skewed distribution and how we are going to fix it.
+Next, we are going to take a look on the distribution of the data - some of the data are missing, so it would be of interest to take a look on the skewed distribution and how we are going to fix it. We are going to use `ggplot2` for plotting - the variable `g` will accumulate all plotting information needed.
 
 
 ```r
@@ -102,7 +103,70 @@ We recorded median of 10400 and mean of 9354.
 
 ## What is the average daily activity pattern?
 
+Firstly, we are going to calculate the daily average. Using the similar approach with `group_by` function, we get a new summary, named `average_activity_data`. 
 
+
+```r
+average_activity_data <- analytic_data %>%
+    group_by(interval) %>%
+    summarise(avg_steps = mean(steps, na.rm = TRUE)) %>%
+    arrange(interval) 
+
+head(average_activity_data)
+```
+
+```
+## Source: local data frame [6 x 2]
+## 
+##              interval avg_steps
+##                (time)     (dbl)
+## 1 1970-01-01 00:00:00 1.7169811
+## 2 1970-01-01 00:05:00 0.3396226
+## 3 1970-01-01 00:10:00 0.1320755
+## 4 1970-01-01 00:15:00 0.1509434
+## 5 1970-01-01 00:20:00 0.0754717
+## 6 1970-01-01 00:25:00 2.0943396
+```
+
+The interval will show date of `1970-01-01` - this is due to formatting as POSIXct. Finally, let's show a plot to further understand this.
+
+
+```r
+library(scales)
+
+g <- ggplot(average_activity_data, aes(interval, avg_steps))
+g <- g + geom_line(col = 'blue')
+g <- g + scale_x_datetime(labels = date_format('%H:%M'), 
+                          breaks = date_breaks('3 hours'), 
+                          expand = c(0,0))
+g <- g + theme_bw(base_size = 12, base_family = 'sans')
+g <- g + labs(x = 'Time of the day', y = 'Average number of steps') 
+g <- g + labs(title = 'Average activity data on a day')
+
+print(g)
+```
+
+![](PA1_template_files/figure-html/plot_average_activity-1.png) 
+
+As we can see, we have a peak some-time around 9 AM - around 200 steps. Let's see the maximum average number of steps, and when does it happen.
+
+
+```r
+result <- average_activity_data %>%
+    filter(avg_steps == max(avg_steps))
+
+print(result)
+```
+
+```
+## Source: local data frame [1 x 2]
+## 
+##              interval avg_steps
+##                (time)     (dbl)
+## 1 1970-01-01 08:35:00  206.1698
+```
+
+Indeed, we see that at time of 08:35, the maximum number of steps, that is 206 steps is recorded.
 
 ## Inputing missing values
 

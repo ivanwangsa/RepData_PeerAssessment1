@@ -8,7 +8,7 @@ output:
 
 ## Loading and preprocessing the data
 
-At first, we load the packages needed to clean-up the data, namely `lubridate` and `dplyr`.
+At first, we load the packages needed to clean-up the data, namely `lubridate` and `dplyr`. Then, we read the raw data and store it in `raw_data`. We reformat the data on the correct format, more specifically column `date` in `POSIXct` class, and column `interval` in `POSIXct` class, assuming UNIX time (origin = `1970-01-01`).
 
 ```{r, preprocess_data, message = FALSE}
 
@@ -16,10 +16,11 @@ library(dplyr)
 library(lubridate)
 
 path_to_data <- file.path('data', 'activity.csv')
-measured_data <- tbl_df(read.csv(path_to_data))
-analytic_data <- measured_data %>%
+raw_data <- tbl_df(read.csv(path_to_data))
+analytic_data <- raw_data %>%
     mutate(date = ymd(as.character(date))) %>%
-    mutate(interval = new_period(hour = interval %/% 100, minute = interval %% 100))
+    mutate(interval = ((interval %/% 100) * 60 + interval %% 100) * 60) %>%
+    mutate(interval = as.POSIXct(interval, origin = '1970-01-01', tz = 'UTC'))
         
 ```
 
@@ -41,7 +42,7 @@ daily_total_steps <- analytic_data %>%
 head(daily_total_steps)
 ```
 
-Next, we are going to take a look on the distribution of the data - some of the data are missing, so it would be of interest to take a look on the skewed distribution and how we are going to fix it.
+Next, we are going to take a look on the distribution of the data - some of the data are missing, so it would be of interest to take a look on the skewed distribution and how we are going to fix it. We are going to use `ggplot2` for plotting - the variable `g` will accumulate all plotting information needed.
 
 ```{r, plot_total_steps, message = FALSE}
 library(ggplot2)
@@ -72,7 +73,46 @@ We recorded median of `r as.character(median_total_steps)` and mean of `r as.cha
 
 ## What is the average daily activity pattern?
 
+Firstly, we are going to calculate the daily average. Using the similar approach with `group_by` function, we get a new summary, named `average_activity_data`. 
 
+```{r, average_activity}
+average_activity_data <- analytic_data %>%
+    group_by(interval) %>%
+    summarise(avg_steps = mean(steps, na.rm = TRUE)) %>%
+    arrange(interval) 
+
+head(average_activity_data)
+```
+
+The interval will show date of `1970-01-01` - this is due to formatting as POSIXct. Finally, let's show a plot to further understand this.
+
+```{r, plot_average_activity}
+
+library(scales)
+
+g <- ggplot(average_activity_data, aes(interval, avg_steps))
+g <- g + geom_line(col = 'blue')
+g <- g + scale_x_datetime(labels = date_format('%H:%M'), 
+                          breaks = date_breaks('3 hours'), 
+                          expand = c(0,0))
+g <- g + theme_bw(base_size = 12, base_family = 'sans')
+g <- g + labs(x = 'Time of the day', y = 'Average number of steps') 
+g <- g + labs(title = 'Average activity data on a day')
+
+print(g)
+```
+
+As we can see, we have a peak some-time around 9 AM - around 200 steps. Let's see the maximum average number of steps, and when does it happen.
+
+```{r, find_maximum_average_activity}
+
+result <- average_activity_data %>%
+    filter(avg_steps == max(avg_steps))
+
+print(result)
+```
+
+Indeed, we see that at time of `r format(result$interval, '%H:%M')`, the maximum number of steps, that is `r format(result$avg_steps, digits = 5)` steps is recorded.
 
 ## Inputing missing values
 
