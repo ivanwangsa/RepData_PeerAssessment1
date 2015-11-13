@@ -256,7 +256,7 @@ print.xtable(xt, type = 'html')
 ```
 
 <!-- html table generated in R 3.2.2 by xtable 1.8-0 package -->
-<!-- Fri Nov 13 00:26:10 2015 -->
+<!-- Sat Nov 14 00:06:37 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> Median </th> <th> Mean </th>  </tr>
   <tr> <td align="right"> Daily Total Steps </td> <td align="right"> 10400 </td> <td align="right"> 9354 </td> </tr>
@@ -266,3 +266,37 @@ print.xtable(xt, type = 'html')
 We see that the median and mean increases, as expected. As more data are filled in, these missing data (which were not counted) are getting counted, thereby shifting both statistics.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Let us first separate out the weekdays and the weekends with a new factor variable. We will store this in `classified_data`, with a new variable `daytype`.
+
+
+```r
+classified_data <- filled_data %>%
+    mutate(daytype = factor(ifelse(weekdays(date) %in% c("Saturday", "Sunday"), 
+                            "weekend", "weekday")))
+```
+
+Then, let's calculate the average steps in a day for weekdays and weekends, and immediately plot it as well.
+
+
+```r
+average_activity_classified <- classified_data %>%
+    group_by(daytype, interval) %>%
+    summarise(avg_steps = mean(steps, na.rm = TRUE))
+
+g4 <- ggplot(average_activity_classified, aes(interval, avg_steps))
+g4 <- g4 + geom_line(col = 'blue')
+g4 <- g4 + scale_x_datetime(labels = date_format('%H:%M'), 
+                          breaks = date_breaks('3 hours'), 
+                          expand = c(0,0))
+g4 <- g4 + theme_bw(base_size = 12, base_family = 'sans')
+g4 <- g4 + labs(x = 'Time of the day', y = 'Average number of steps') 
+g4 <- g4 + labs(title = 'Average activity data on a day')
+g4 <- g4 + facet_grid(daytype ~ .)
+
+print(g4)
+```
+
+![](figure/plot_classified_data-1.png) 
+
+As we can see, weekday records a higher peak of the day, at sometime around 9 am, however the activity for the rest of the day is a little bit muted, compared to the weekend data - presumably due to work activities in weekdays.
